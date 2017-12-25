@@ -70,6 +70,10 @@ public class RateListViewModel extends BaseObservable
     @Override
     public void onResponse(Response<List<Currency>> response) {
         List<Currency> rateList = response.body();
+        if (rateList == null || rateList.size() == 0) {
+            onFailure(new Exception(String.valueOf(response.code())));
+            return;
+        }
         DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         mActivity.getSupportActionBar().setSubtitle(mActivity
                 .getApplicationContext().getString(R.string.last_update, df.format(new Date())));
