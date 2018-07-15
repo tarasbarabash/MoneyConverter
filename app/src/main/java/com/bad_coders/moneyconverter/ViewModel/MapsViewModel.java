@@ -8,6 +8,7 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.bad_coders.moneyconverter.Model.BankResponse;
@@ -30,7 +31,7 @@ import retrofit2.Response;
  * Created on 17.12.2017.
  */
 
-public class MapsViewModel implements ExponentialBackOffCallback.OnFetchListener<BankResponse> {
+public class MapsViewModel implements ExponentialBackOffCallback.OnFetchListener<BankResponse>, MapsFragment.OnPermissionResultListener {
     private static final String TAG = MapsViewModel.class.getSimpleName();
     private static final int RC_PERMISSIONS = 32;
     private GoogleMap mMap;
@@ -54,19 +55,10 @@ public class MapsViewModel implements ExponentialBackOffCallback.OnFetchListener
 
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            int hasLocationPermission = mActivity
-                    .checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION);
-            if (hasLocationPermission != PackageManager.PERMISSION_GRANTED) {
-                mActivity.requestPermissions(new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                        RC_PERMISSIONS);
-                return;
-            }
-        }
-        loadMaps();
+        mMapsFragment.requestPermission(android.Manifest.permission.ACCESS_FINE_LOCATION, RC_PERMISSIONS, this);
     }
 
-    @SuppressLint("MissingPermission")
+
     private void loadMaps() {
         mMap.setMyLocationEnabled(true);
         mLocationManager = (LocationManager) mActivity
@@ -97,6 +89,18 @@ public class MapsViewModel implements ExponentialBackOffCallback.OnFetchListener
     @Override
     public void onFailure(Throwable t) {
         Toast.makeText(mMapsFragment.getContext(), R.string.error_msg, Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void granted() {
+        Log.i(TAG, "granted: gps");
+        loadMaps();
+    }
+
+    @Override
+    public void denied() {
+        Log.i(TAG, "denied: gps");
+        Toast.makeText(mActivity,   R.string.gps_error, Toast.LENGTH_SHORT).show();
     }
 
     private class LoadBanksAsyncTask extends AsyncTask<Void, Location, Location> {
